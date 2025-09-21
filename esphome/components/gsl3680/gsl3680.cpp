@@ -28,7 +28,7 @@ void GSL3680Touchscreen::setup() {
   
   if (!this->init_chip_()) {
     ESP_LOGE(TAG, "Failed to initialize GSL3680");
-    this->Component::mark_failed();
+    this->mark_failed();
     return;
   }
   
@@ -118,25 +118,23 @@ void GSL3680Touchscreen::read_touches_() {
   uint8_t finger_num = touch_data[0];
   
   if (finger_num == 0) {
-    // No touch
+    // No touch - clear any existing touches
     return;
   }
   
   // Process first touch point
   uint16_t x = ((touch_data[7] & 0x0F) << 8) | touch_data[6];
   uint16_t y = (touch_data[5] << 8) | touch_data[4];
+  uint8_t id = (touch_data[7] & 0xF0) >> 4;
   
-  ESP_LOGV(TAG, "Touch detected: x=%d, y=%d, fingers=%d", x, y, finger_num);
+  ESP_LOGV(TAG, "Touch detected: x=%d, y=%d, id=%d, fingers=%d", x, y, id, finger_num);
   
-  touchscreen::TouchPoint touch_point;
-  touch_point.x = x;
-  touch_point.y = y;
-  touch_point.id = (touch_data[7] & 0xF0) >> 4;
-  touch_point.state = touchscreen::STATE_PRESSED;
-  
-  this->Component::defer([this, touch_point]() { 
-    this->send_touches_({touch_point}); 
-  });
+  // Add the touch point using the standard touchscreen API
+  this->add_raw_touch_position_(id, x, y);
+}
+
+void GSL3680Touchscreen::update_touches() {
+  this->read_touches_();
 }
 
 void GSL3680Touchscreen::dump_config() {

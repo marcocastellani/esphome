@@ -8,11 +8,12 @@
 namespace esphome {
 namespace gsl3680 {
 
-class GSL3680Touchscreen : public touchscreen::Touchscreen, public Component, public i2c::I2CDevice {
+class GSL3680Touchscreen : public touchscreen::Touchscreen, public i2c::I2CDevice {
  public:
   void setup() override;
   void dump_config() override;
   void loop() override;
+  void update_touches() override;
   
   void set_interrupt_pin(GPIOPin *pin) { this->interrupt_pin_ = pin; }
   void set_reset_pin(GPIOPin *pin) { this->reset_pin_ = pin; }
