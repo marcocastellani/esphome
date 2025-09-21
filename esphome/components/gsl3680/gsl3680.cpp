@@ -75,82 +75,123 @@ void GSL3680Touchscreen::hardware_reset_sequence_() {
   }
 }
 
+bool GSL3680Touchscreen::clear_registers_() {
+  ESP_LOGD(TAG, "Clearing registers...");
+  
+  uint8_t wrbuf[4];
+  
+  // Step 1: Write 0x88 to register 0xe0
+  wrbuf[0] = 0x88;
+  if (!this->write_register(0xe0, wrbuf, 1)) {
+    ESP_LOGW(TAG, "Failed to write 0x88 to register 0xe0");
+    return false;
+  }
+  delay(20);
+  
+  // Step 2: Write 0x01 to register 0x88
+  wrbuf[0] = 0x01;
+  if (!this->write_register(0x88, wrbuf, 1)) {
+    ESP_LOGW(TAG, "Failed to write 0x01 to register 0x88");
+    return false;
+  }
+  delay(5);
+  
+  // Step 3: Write 0x04 to register 0xe4
+  wrbuf[0] = 0x04;
+  if (!this->write_register(0xe4, wrbuf, 1)) {
+    ESP_LOGW(TAG, "Failed to write 0x04 to register 0xe4");
+    return false;
+  }
+  delay(5);
+  
+  // Step 4: Write 0x00 to register 0xe0
+  wrbuf[0] = 0x00;
+  if (!this->write_register(0xe0, wrbuf, 1)) {
+    ESP_LOGW(TAG, "Failed to write 0x00 to register 0xe0");
+    return false;
+  }
+  delay(20);
+  
+  ESP_LOGD(TAG, "Registers cleared successfully");
+  return true;
+}
+
 void GSL3680Touchscreen::reset_chip_() {
-  ESP_LOGD(TAG, "Performing software reset...");
+  ESP_LOGD(TAG, "Performing chip reset...");
   
-  // Software reset sequence
-  uint8_t reset_data[] = {0x88};
-  if (!this->write_register(0xe0, reset_data, 1)) {
-    ESP_LOGW(TAG, "Software reset failed");
-    return;
+  if (this->reset_pin_ != nullptr) {
+    this->reset_pin_->digital_write(false);
+    delay(20);
+    this->reset_pin_->digital_write(true);
+    delay(20);
+  }
+  
+  // Additional software reset steps
+  uint8_t wrbuf[4];
+  
+  wrbuf[0] = 0x88;
+  this->write_register(0xe0, wrbuf, 1);
+  delay(10);
+  
+  wrbuf[0] = 0x04;
+  this->write_register(0xe4, wrbuf, 1);
+  delay(10);
+  
+  wrbuf[0] = 0x00; wrbuf[1] = 0x00; wrbuf[2] = 0x00; wrbuf[3] = 0x00;
+  this->write_register(0xbc, wrbuf, 4);
+  delay(10);
+  
+  ESP_LOGD(TAG, "Chip reset completed");
+}
+
+bool GSL3680Touchscreen::startup_chip_() {
+  ESP_LOGD(TAG, "Starting up chip...");
+  
+  uint8_t wrbuf[1];
+  wrbuf[0] = 0x00;
+  
+  if (!this->write_register(0xe0, wrbuf, 1)) {
+    ESP_LOGE(TAG, "Failed to startup chip");
+    return false;
   }
   delay(10);
   
-  uint8_t clear_data[] = {0x04};
-  if (!this->write_register(0xe4, clear_data, 1)) {
-    ESP_LOGW(TAG, "Clear register failed");
-    return;
-  }
-  delay(10);
-  
-  uint8_t zero_data[] = {0x00, 0x00, 0x00, 0x00};
-  if (!this->write_register(0xbc, zero_data, 4)) {
-    ESP_LOGW(TAG, "Clear BC register failed");
-    return;
-  }
-  delay(10);
-  
-  ESP_LOGD(TAG, "Software reset completed");
+  ESP_LOGD(TAG, "Chip startup completed");
+  return true;
 }
 
 bool GSL3680Touchscreen::init_chip_() {
-  ESP_LOGD(TAG, "Initializing GSL3680 chip...");
+  ESP_LOGD(TAG, "Initializing GSL3680 chip following manufacturer sequence...");
   
-  // Clear registers first
+  // Step 1: Clear registers
+  if (!this->clear_registers_()) {
+    ESP_LOGE(TAG, "Failed to clear registers");
+    return false;
+  }
+  
+  // Step 2: Reset chip
   this->reset_chip_();
   
-  // Clear registers
-  uint8_t clear_reg_data[] = {0x88};
-  if (!this->write_register(0xe0, clear_reg_data, 1)) {
-    ESP_LOGE(TAG, "Failed to write to register 0xe0");
-    return false;
-  }
-  delay(20);
-  
-  uint8_t data1[] = {0x01};
-  if (!this->write_register(0x88, data1, 1)) {
-    ESP_LOGE(TAG, "Failed to write to register 0x88");
-    return false;
-  }
-  delay(5);
-  
-  uint8_t data2[] = {0x04};
-  if (!this->write_register(0xe4, data2, 1)) {
-    ESP_LOGE(TAG, "Failed to write to register 0xe4");
-    return false;
-  }
-  delay(5);
-  
-  uint8_t data3[] = {0x00};
-  if (!this->write_register(0xe0, data3, 1)) {
-    ESP_LOGE(TAG, "Failed to clear register 0xe0");
-    return false;
-  }
-  delay(20);
-  
-  // Load firmware
+  // Step 3: Load firmware
   if (!this->load_firmware_()) {
     ESP_LOGE(TAG, "Failed to load firmware");
     return false;
   }
   
-  // Startup chip
-  uint8_t startup_data[] = {0x00};
-  if (!this->write_register(0xe0, startup_data, 1)) {
+  // Step 4: Startup chip
+  if (!this->startup_chip_()) {
     ESP_LOGE(TAG, "Failed to startup chip");
     return false;
   }
-  delay(10);
+  
+  // Step 5: Reset chip again
+  this->reset_chip_();
+  
+  // Step 6: Startup chip again
+  if (!this->startup_chip_()) {
+    ESP_LOGE(TAG, "Failed to startup chip (second time)");
+    return false;
+  }
   
   // Check if chip is responding
   delay(30);
