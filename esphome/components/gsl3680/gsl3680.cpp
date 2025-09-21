@@ -11,7 +11,7 @@ static const char *const TAG = "gsl3680";
 void GSL3680Touchscreen::setup() {
   ESP_LOGCONFIG(TAG, "Setting up GSL3680 touchscreen...");
   
-  // Configure pins
+  // Configure pins first
   if (this->interrupt_pin_ != nullptr) {
     this->interrupt_pin_->setup();
     this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
@@ -24,19 +24,9 @@ void GSL3680Touchscreen::setup() {
     ESP_LOGD(TAG, "Reset pin configured");
   }
   
-  // Test I2C communication first
-  ESP_LOGD(TAG, "Testing I2C communication...");
-  uint8_t test_data[4];
-  if (!this->read_register(0xf0, test_data, 4)) {
-    ESP_LOGE(TAG, "I2C communication test failed");
-    this->mark_failed();
-    return;
-  }
-  ESP_LOGD(TAG, "I2C communication OK, read: %02X %02X %02X %02X", test_data[0], test_data[1], test_data[2], test_data[3]);
-  
   // Reset and initialize chip
   this->reset_chip_();
-  delay(50);
+  delay(100);  // Give more time after reset
   
   if (!this->init_chip_()) {
     ESP_LOGE(TAG, "Failed to initialize GSL3680");
@@ -56,6 +46,8 @@ void GSL3680Touchscreen::reset_chip_() {
     this->reset_pin_->digital_write(true);
     delay(20);
     ESP_LOGD(TAG, "Hardware reset completed");
+  } else {
+    ESP_LOGD(TAG, "No reset pin configured, doing software reset only");
   }
   
   // Software reset sequence
@@ -171,7 +163,7 @@ bool GSL3680Touchscreen::load_firmware_() {
     }
     
     // Progress indicator
-    if (i % 100 == 0) {
+    if (i % 200 == 0) {
       ESP_LOGV(TAG, "Firmware loading progress: %zu/%zu", i, sizeof(GSLX680_FW) / sizeof(GSLX680_FW[0]));
     }
   }
@@ -193,7 +185,7 @@ void GSL3680Touchscreen::read_touches_() {
   uint8_t touch_data[24];
   
   if (!this->read_register(0x80, touch_data, 24)) {
-    ESP_LOGW(TAG, "Failed to read touch data");
+    ESP_LOGV(TAG, "Failed to read touch data");
     return;
   }
   
@@ -214,7 +206,7 @@ void GSL3680Touchscreen::read_touches_() {
   uint16_t y = (touch_data[5] << 8) | touch_data[4];
   uint8_t id = (touch_data[7] & 0xF0) >> 4;
   
-  ESP_LOGV(TAG, "Touch detected: x=%d, y=%d, id=%d, fingers=%d", x, y, id, finger_num);
+  ESP_LOGD(TAG, "Touch detected: x=%d, y=%d, id=%d, fingers=%d", x, y, id, finger_num);
   
   // Add the touch point using the standard touchscreen API
   this->add_raw_touch_position_(id, x, y);
