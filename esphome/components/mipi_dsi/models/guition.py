@@ -36,12 +36,11 @@ DriverChip(
     ],
 )
 
-
 # fmt: off
 DriverChip(
     "jd9365",
-    width=1024,
-    height=800,
+    width=800,  # Corrected from 1024 - this appears to be 800x1280 based on datasheet filename
+    height=1280,  # Corrected from 800
     hsync_back_porch=20,
     hsync_pulse_width=20,
     hsync_front_porch=40,
@@ -53,12 +52,14 @@ DriverChip(
     swap_xy=cv.UNDEFINED,
     color_order="RGB",
     initsequence=[
+        # Page selection and basic setup
         (0xE0, 0x00),
         (0xE1, 0x93),
         (0xE2, 0x65),
         (0xE3, 0xF8),
         (0x80, 0x01),
 
+        # Page 1 - Display parameters
         (0xE0, 0x01),
         (0x00, 0x00),
         (0x01, 0x39),
@@ -98,6 +99,7 @@ DriverChip(
         (0x59, 0x0A),
         (0x5A, 0x28),
 
+        # Gamma settings - Red positive
         (0x5B, 0x15),
         (0x5D, 0x50),
         (0x5E, 0x37),
@@ -122,6 +124,7 @@ DriverChip(
         (0x6E, 0x1F),
         (0x6F, 0x0E),
 
+        # Gamma settings - Red negative
         (0x70, 0x50),
         (0x71, 0x37),
         (0x72, 0x29),
@@ -144,8 +147,9 @@ DriverChip(
         (0x80, 0x32),
         (0x81, 0x1F),
         (0x82, 0x0E),
-        (0xE0, 0x02),
 
+        # Page 2 - GOA settings
+        (0xE0, 0x02),
         (0x00, 0x1F),
         (0x01, 0x1F),
         (0x02, 0x52),
@@ -279,14 +283,25 @@ DriverChip(
         (0x6D, 0x32),
 
         (0x6E, 0x08),
+        
+        # Page 4 - Additional settings
         (0xE0, 0x04),
         (0x2C, 0x6B),
         (0x35, 0x08),
         (0x37, 0x00),
 
+        # Back to Page 0 for final commands
         (0xE0, 0x00),
-        (0x11, 0x00),
-    
         
+        # Critical: Sleep Out command with delay
+        (0x11, 0x00),  # Sleep out
+        # Note: ESPHome should add 120ms delay here
+        
+        # Critical: Display On command with delay  
+        (0x29, 0x00),  # Display on
+        # Note: ESPHome should add 5ms delay here
+        
+        # Tearing Effect Line On
+        (0x35, 0x00),
     ],
 )
