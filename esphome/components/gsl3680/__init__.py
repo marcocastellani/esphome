@@ -3,6 +3,7 @@ import esphome.config_validation as cv
 from esphome.components import i2c
 from esphome.const import CONF_ID
 
+CODEOWNERS = ["@marcocastellani"]
 DEPENDENCIES = ["i2c"]
 
 gsl3680_ns = cg.esphome_ns.namespace("gsl3680")
