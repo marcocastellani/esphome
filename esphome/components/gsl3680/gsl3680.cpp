@@ -11,21 +11,22 @@ static const char *const TAG = "gsl3680";
 void GSL3680Touchscreen::setup() {
   ESP_LOGCONFIG(TAG, "Setting up GSL3680 touchscreen...");
   
-  // Configure pins first
-  if (this->interrupt_pin_ != nullptr) {
-    this->interrupt_pin_->setup();
-    this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
-    ESP_LOGD(TAG, "Interrupt pin configured");
-  }
-  
+  // First configure pins for initialization sequence
   if (this->reset_pin_ != nullptr) {
     this->reset_pin_->setup();
     this->reset_pin_->pin_mode(gpio::FLAG_OUTPUT);
     ESP_LOGD(TAG, "Reset pin configured");
   }
   
-  // Reset and initialize chip
-  this->reset_chip_();
+  if (this->interrupt_pin_ != nullptr) {
+    this->interrupt_pin_->setup();
+    // During initialization, INT pin must be OUTPUT (as per manufacturer code)
+    this->interrupt_pin_->pin_mode(gpio::FLAG_OUTPUT);
+    ESP_LOGD(TAG, "Interrupt pin configured as OUTPUT for initialization");
+  }
+  
+  // Perform hardware reset with proper pin sequence
+  this->hardware_reset_sequence_();
   delay(100);  // Give more time after reset
   
   if (!this->init_chip_()) {
@@ -34,21 +35,48 @@ void GSL3680Touchscreen::setup() {
     return;
   }
   
+  // After initialization, configure interrupt pin as INPUT
+  if (this->interrupt_pin_ != nullptr) {
+    this->interrupt_pin_->pin_mode(gpio::FLAG_INPUT | gpio::FLAG_PULLUP);
+    ESP_LOGD(TAG, "Interrupt pin reconfigured as INPUT");
+  }
+  
   ESP_LOGCONFIG(TAG, "GSL3680 setup complete");
 }
 
-void GSL3680Touchscreen::reset_chip_() {
-  ESP_LOGD(TAG, "Resetting GSL3680 chip...");
+void GSL3680Touchscreen::hardware_reset_sequence_() {
+  ESP_LOGD(TAG, "Performing hardware reset sequence...");
   
-  if (this->reset_pin_ != nullptr) {
+  if (this->reset_pin_ != nullptr && this->interrupt_pin_ != nullptr) {
+    // Set reset low and interrupt low
+    this->reset_pin_->digital_write(false);
+    this->interrupt_pin_->digital_write(false);
+    delay(10);
+    
+    // Set interrupt to select I2C address (0 for 0x40)
+    this->interrupt_pin_->digital_write(false);  // 0x40 address
+    delay(1);
+    
+    // Release reset
+    this->reset_pin_->digital_write(true);
+    delay(10);
+    
+    delay(50);  // Wait for chip to be ready
+    ESP_LOGD(TAG, "Hardware reset sequence completed");
+  } else if (this->reset_pin_ != nullptr) {
+    // Simple reset if no interrupt pin
     this->reset_pin_->digital_write(false);
     delay(20);
     this->reset_pin_->digital_write(true);
-    delay(20);
-    ESP_LOGD(TAG, "Hardware reset completed");
+    delay(50);
+    ESP_LOGD(TAG, "Simple hardware reset completed");
   } else {
-    ESP_LOGD(TAG, "No reset pin configured, doing software reset only");
+    ESP_LOGD(TAG, "No reset pin configured, will try software reset only");
   }
+}
+
+void GSL3680Touchscreen::reset_chip_() {
+  ESP_LOGD(TAG, "Performing software reset...");
   
   // Software reset sequence
   uint8_t reset_data[] = {0x88};
@@ -77,6 +105,9 @@ void GSL3680Touchscreen::reset_chip_() {
 
 bool GSL3680Touchscreen::init_chip_() {
   ESP_LOGD(TAG, "Initializing GSL3680 chip...");
+  
+  // Clear registers first
+  this->reset_chip_();
   
   // Clear registers
   uint8_t clear_reg_data[] = {0x88};
@@ -175,7 +206,7 @@ bool GSL3680Touchscreen::load_firmware_() {
 void GSL3680Touchscreen::loop() {
   // Check interrupt pin
   if (this->interrupt_pin_ != nullptr && this->interrupt_pin_->digital_read()) {
-    return;  // No touch event
+    return;  // No touch event (interrupt is active low)
   }
   
   this->update_touches();

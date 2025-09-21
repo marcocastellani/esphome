@@ -22,6 +22,7 @@ class GSL3680Touchscreen : public touchscreen::Touchscreen, public i2c::I2CDevic
   GPIOPin *interrupt_pin_{nullptr};
   GPIOPin *reset_pin_{nullptr};
   
+  void hardware_reset_sequence_();
   bool init_chip_();
   bool load_firmware_();
   void reset_chip_();
