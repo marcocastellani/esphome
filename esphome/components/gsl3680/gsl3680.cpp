@@ -1,7 +1,7 @@
 #include "gsl3680.h"
 #include "esphome/core/log.h"
 #include "esphome/core/hal.h"
-#include "gsl3680_fw.h"  // Firmware data
+#include "gsl3680_fw.h"
 
 namespace esphome {
 namespace gsl3680 {
@@ -28,7 +28,7 @@ void GSL3680Touchscreen::setup() {
   
   if (!this->init_chip_()) {
     ESP_LOGE(TAG, "Failed to initialize GSL3680");
-    this->mark_failed();
+    this->Component::mark_failed();
     return;
   }
   
@@ -132,9 +132,11 @@ void GSL3680Touchscreen::read_touches_() {
   touch_point.x = x;
   touch_point.y = y;
   touch_point.id = (touch_data[7] & 0xF0) >> 4;
-  touch_point.state = touchscreen::TOUCH_STATE_PRESSED;
+  touch_point.state = touchscreen::STATE_PRESSED;
   
-  this->defer([this, touch_point]() { this->send_touch_(touch_point); });
+  this->Component::defer([this, touch_point]() { 
+    this->send_touches_({touch_point}); 
+  });
 }
 
 void GSL3680Touchscreen::dump_config() {
