@@ -281,20 +281,26 @@ DriverChip(
         (0x6B, 0x08),
         (0x6C, 0x00),
         (0x6D, 0x32),
+
         (0x6E, 0x08),
+        
         # Page 4 - Additional settings
         (0xE0, 0x04),
         (0x2C, 0x6B),
         (0x35, 0x08),
         (0x37, 0x00),
+
         # Back to Page 0 for final commands
         (0xE0, 0x00),
+        
         # Critical: Sleep Out command with delay
         (0x11, 0x00),  # Sleep out
         # Note: ESPHome should add 120ms delay here
-        # Critical: Display On command with delay
+        
+        # Critical: Display On command with delay  
         (0x29, 0x00),  # Display on
         # Note: ESPHome should add 5ms delay here
+        
         # Tearing Effect Line On
         (0x35, 0x00),
     ],
