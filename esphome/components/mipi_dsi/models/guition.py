@@ -52,121 +52,130 @@ DriverChip(
     swap_xy=cv.UNDEFINED,
     color_order="RGB",
     initsequence=[
-        # Page selection and basic setup
-        (0xE0, 0x00),
-        (0xE1, 0x93),
-        (0xE2, 0x65),
-        (0xE3, 0xF8),
-        (0x80, 0x01),
+        # =================== PAGINA 0 - Setup Iniziale ===================
+        (0xE0, 0x00),  # Seleziona pagina 0 (comando principale)
+        (0xE1, 0x93),  # Codice sblocco 1 (abilita comandi estesi)
+        (0xE2, 0x65),  # Codice sblocco 2
+        (0xE3, 0xF8),  # Codice sblocco 3
+        (0x80, 0x01),  # Abilita comandi estesi del driver
 
-        # Page 1 - Display parameters
-        (0xE0, 0x01),
-        (0x00, 0x00),
-        (0x01, 0x39),
-        (0x03, 0x10),
-        (0x04, 0x41),
+        # =============== PAGINA 1 - Parametri Display ================
+        (0xE0, 0x01),  # Seleziona pagina 1 (parametri display)
 
-        (0x0C, 0x74),
-        (0x17, 0x00),
-        (0x18, 0xD7),
-        (0x19, 0x00),
-        (0x1A, 0x00),
+        # --- Controlli base display ---
+        (0x00, 0x00),  # Modalità display standard
+        (0x01, 0x39),  # Controllo inversione colori (0x39 = normale)
+        (0x03, 0x10),  # Controllo timing verticale
+        (0x04, 0x41),  # Controllo timing orizzontale
 
-        (0x1B, 0xD7),
-        (0x1C, 0x00),
-        (0x24, 0xFE),
-        (0x35, 0x26),
-        (0x37, 0x69),
+        # --- Controlli alimentazione e tensioni ---
+        (0x0C, 0x74),  # Controllo alimentazione principale
+        (0x17, 0x00),  # VREG1 voltage (regolatore 1)
+        (0x18, 0xD7),  # VCM voltage (tensione common)
+        (0x19, 0x00),  # VCM voltage low byte
+        (0x1A, 0x00),  # Reserved
 
-        (0x38, 0x05),
-        (0x39, 0x06),
-        (0x3A, 0x08),
-        (0x3C, 0x78),
-        (0x3D, 0xFF),
+        (0x1B, 0xD7),  # VCM voltage negative
+        (0x1C, 0x00),  # VCM voltage negative low byte
+        (0x24, 0xFE),  # Controllo frame rate
+        (0x35, 0x26),  # Controllo tensione gate
+        (0x37, 0x69),  # Controllo tensione source
 
-        (0x3E, 0xFF),
-        (0x3F, 0xFF),
-        (0x40, 0x06),
-        (0x41, 0xA0),
-        (0x43, 0x14),
+        # --- Parametri timing fine ---
+        (0x38, 0x05),  # Timing parametro 1
+        (0x39, 0x06),  # Timing parametro 2
+        (0x3A, 0x08),  # Timing parametro 3
+        (0x3C, 0x78),  # Controllo carica pump
+        (0x3D, 0xFF),  # Controllo tensione negativa
 
-        (0x44, 0x0B),
-        (0x45, 0x30),
-        (0x4B, 0x04),
-        (0x55, 0x02),
-        (0x57, 0x89),
+        (0x3E, 0xFF),  # Controllo tensione negativa 2
+        (0x3F, 0xFF),  # Controllo tensione negativa 3
+        (0x40, 0x06),  # Gate driver controllo 1
+        (0x41, 0xA0),  # Gate driver controllo 2
+        (0x43, 0x14),  # Gate driver timing
 
-        (0x59, 0x0A),
-        (0x5A, 0x28),
+        # --- Controlli gate e source driver ---
+        (0x44, 0x0B),  # Gate driver setup
+        (0x45, 0x30),  # Gate driver hold
+        (0x4B, 0x04),  # Source driver controllo
+        (0x55, 0x02),  # Source precharge
+        (0x57, 0x89),  # Source timing
 
-        # Gamma settings - Red positive
-        (0x5B, 0x15),
-        (0x5D, 0x50),
-        (0x5E, 0x37),
-        (0x5F, 0x29),
-        (0x60, 0x1E),
+        (0x59, 0x0A),  # Source setup
+        (0x5A, 0x28),  # Source hold
 
-        (0x61, 0x1D),
-        (0x62, 0x12),
-        (0x63, 0x1A),
-        (0x64, 0x08),
-        (0x65, 0x25),
+        # ========== GAMMA CORRECTION - Canale Rosso ==========
+        # --- Gamma positiva (luminosità crescente 0→255) ---
+        (0x5B, 0x15),  # Gamma R+ punto 1 (nero/molto scuro)
+        (0x5D, 0x50),  # Gamma R+ punto 2
+        (0x5E, 0x37),  # Gamma R+ punto 3
+        (0x5F, 0x29),  # Gamma R+ punto 4
+        (0x60, 0x1E),  # Gamma R+ punto 5
 
-        (0x66, 0x26),
-        (0x67, 0x28),
-        (0x68, 0x49),
-        (0x69, 0x3A),
-        (0x6A, 0x43),
+        (0x61, 0x1D),  # Gamma R+ punto 6
+        (0x62, 0x12),  # Gamma R+ punto 7
+        (0x63, 0x1A),  # Gamma R+ punto 8 (toni medi)
+        (0x64, 0x08),  # Gamma R+ punto 9
+        (0x65, 0x25),  # Gamma R+ punto 10
 
-        (0x6B, 0x3A),
-        (0x6C, 0x3B),
-        (0x6D, 0x32),
-        (0x6E, 0x1F),
-        (0x6F, 0x0E),
+        (0x66, 0x26),  # Gamma R+ punto 11
+        (0x67, 0x28),  # Gamma R+ punto 12
+        (0x68, 0x49),  # Gamma R+ punto 13
+        (0x69, 0x3A),  # Gamma R+ punto 14
+        (0x6A, 0x43),  # Gamma R+ punto 15
 
-        # Gamma settings - Red negative
-        (0x70, 0x50),
-        (0x71, 0x37),
-        (0x72, 0x29),
-        (0x73, 0x1E),
-        (0x74, 0x1D),
+        (0x6B, 0x3A),  # Gamma R+ punto 16
+        (0x6C, 0x3B),  # Gamma R+ punto 17 (toni chiari)
+        (0x6D, 0x32),  # Gamma R+ punto 18
+        (0x6E, 0x1F),  # Gamma R+ punto 19
+        (0x6F, 0x0E),  # Gamma R+ punto 20 (bianco)
 
-        (0x75, 0x12),
-        (0x76, 0x1A),
-        (0x77, 0x08),
-        (0x78, 0x25),
-        (0x79, 0x26),
+        # --- Gamma negativa (luminosità decrescente 255→0) ---
+        (0x70, 0x50),  # Gamma R- punto 1 (bianco)
+        (0x71, 0x37),  # Gamma R- punto 2
+        (0x72, 0x29),  # Gamma R- punto 3
+        (0x73, 0x1E),  # Gamma R- punto 4
+        (0x74, 0x1D),  # Gamma R- punto 5
 
-        (0x7A, 0x28),
-        (0x7B, 0x49),
-        (0x7C, 0x3A),
-        (0x7D, 0x43),
-        (0x7E, 0x3A),
+        (0x75, 0x12),  # Gamma R- punto 6
+        (0x76, 0x1A),  # Gamma R- punto 7
+        (0x77, 0x08),  # Gamma R- punto 8 (toni medi)
+        (0x78, 0x25),  # Gamma R- punto 9
+        (0x79, 0x26),  # Gamma R- punto 10
 
-        (0x7F, 0x3B),
-        (0x80, 0x32),
-        (0x81, 0x1F),
-        (0x82, 0x0E),
+        (0x7A, 0x28),  # Gamma R- punto 11
+        (0x7B, 0x49),  # Gamma R- punto 12
+        (0x7C, 0x3A),  # Gamma R- punto 13
+        (0x7D, 0x43),  # Gamma R- punto 14
+        (0x7E, 0x3A),  # Gamma R- punto 15
 
-        # Page 2 - GOA settings
-        (0xE0, 0x02),
-        (0x00, 0x1F),
-        (0x01, 0x1F),
-        (0x02, 0x52),
-        (0x03, 0x51),
-        (0x04, 0x50),
+        (0x7F, 0x3B),  # Gamma R- punto 16
+        (0x80, 0x32),  # Gamma R- punto 17 (toni scuri)
+        (0x81, 0x1F),  # Gamma R- punto 18
+        (0x82, 0x0E),  # Gamma R- punto 19 (nero)
 
-        (0x05, 0x4B),
-        (0x06, 0x4A),
-        (0x07, 0x49),
-        (0x08, 0x48),
-        (0x09, 0x47),
+        # ============ PAGINA 2 - GOA (Gate Output Array) ============
+        (0xE0, 0x02),  # Seleziona pagina 2 (configurazione gate)
 
-        (0x0A, 0x46),
-        (0x0B, 0x45),
-        (0x0C, 0x44),
-        (0x0D, 0x40),
-        (0x0E, 0x41),
+        # --- Mapping gate output forward (righe display) ---
+        # 0x1F = pin disabilitato, altri valori = gate line mapping
+        (0x00, 0x1F),  # Gate output 0: disabilitato
+        (0x01, 0x1F),  # Gate output 1: disabilitato
+        (0x02, 0x52),  # Gate output 2: STV (start vertical)
+        (0x03, 0x51),  # Gate output 3: CKV1 (clock vertical 1)
+        (0x04, 0x50),  # Gate output 4: CKV2 (clock vertical 2)
+
+        (0x05, 0x4B),  # Gate output 5: gate line 11
+        (0x06, 0x4A),  # Gate output 6: gate line 10
+        (0x07, 0x49),  # Gate output 7: gate line 9
+        (0x08, 0x48),  # Gate output 8: gate line 8
+        (0x09, 0x47),  # Gate output 9: gate line 7
+
+        (0x0A, 0x46),  # Gate output 10: gate line 6
+        (0x0B, 0x45),  # Gate output 11: gate line 5
+        (0x0C, 0x44),  # Gate output 12: gate line 4
+        (0x0D, 0x40),  # Gate output 13: RESET
+        (0x0E, 0x41),  # Gate output 14: VGH
 
         (0x0F, 0x1F),
         (0x10, 0x1F),
@@ -280,28 +289,23 @@ DriverChip(
         (0x6A, 0x64),
         (0x6B, 0x08),
         (0x6C, 0x00),
-        (0x6D, 0x32),
+        (0x6D, 0x32),  # GOA timing parametro 109
+        (0x6E, 0x08),  # GOA timing parametro finale
 
-        (0x6E, 0x08),
-        
-        # Page 4 - Additional settings
-        (0xE0, 0x04),
-        (0x2C, 0x6B),
-        (0x35, 0x08),
-        (0x37, 0x00),
+        # =========== PAGINA 4 - Impostazioni Aggiuntive ===========
+        (0xE0, 0x04),  # Seleziona pagina 4 (controlli avanzati)
+        (0x2C, 0x6B),  # Controllo addizionale per stabilità
+        (0x35, 0x08),  # Controllo temperatura/drift
+        (0x37, 0x00),  # Controllo finale ottimizzazione
 
-        # Back to Page 0 for final commands
-        (0xE0, 0x00),
-        
-        # Critical: Sleep Out command with delay
-        (0x11, 0x00),  # Sleep out
+        # =============== PAGINA 0 - Comandi Finali ===============
+        (0xE0, 0x00),  # Torna a pagina 0 (comandi standard)
+
+        # --- Comandi critici di attivazione ---
+        (0x11, 0x00),  # SLEEP OUT - sveglia display (DEVE attendere 120ms!)
         # Note: ESPHome should add 120ms delay here
-        
-        # Critical: Display On command with delay  
-        (0x29, 0x00),  # Display on
+        (0x29, 0x00),  # DISPLAY ON - accende display (DEVE attendere 5ms!)
         # Note: ESPHome should add 5ms delay here
-        
-        # Tearing Effect Line On
-        (0x35, 0x00),
+        (0x35, 0x00),  # TEARING EFFECT ON - abilita sincronizzazione V-sync
     ],
 )
