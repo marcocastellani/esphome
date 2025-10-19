@@ -12,7 +12,7 @@ from typing import Any
 import voluptuous as vol
 
 from esphome import core, loader, pins, yaml_util
-from esphome.config_helpers import Extend, Remove
+from esphome.config_helpers import Extend, Remove, merge_dicts_ordered
 import esphome.config_validation as cv
 from esphome.const import (
     CONF_ESPHOME,
@@ -647,7 +647,7 @@ class AddDynamicAutoLoadsValidationStep(ConfigValidationStep):
     """
 
     # Has to happen after normal schema is validated and before final schema validation
-    priority = -10.0
+    priority = -5.0
 
     def __init__(self, path: ConfigPath, comp: ComponentManifest) -> None:
         self.path = path
@@ -922,10 +922,9 @@ def validate_config(
     if CONF_SUBSTITUTIONS in config or command_line_substitutions:
         from esphome.components import substitutions
 
-        result[CONF_SUBSTITUTIONS] = {
-            **(config.get(CONF_SUBSTITUTIONS) or {}),
-            **command_line_substitutions,
-        }
+        result[CONF_SUBSTITUTIONS] = merge_dicts_ordered(
+            config.get(CONF_SUBSTITUTIONS) or {}, command_line_substitutions
+        )
         result.add_output_path([CONF_SUBSTITUTIONS], CONF_SUBSTITUTIONS)
         try:
             substitutions.do_substitution_pass(config, command_line_substitutions)
