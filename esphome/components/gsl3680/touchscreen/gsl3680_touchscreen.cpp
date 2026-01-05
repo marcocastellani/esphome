@@ -95,10 +95,10 @@ unsigned int gsl_config_data_id[] = {
 void GSL3680Touchscreen::setup() {
   ESP_LOGCONFIG(TAG, "Setting up GSL3680 touchscreen...");
 
-  this->display_height_ = this->display_->get_height();
-  this->display_width_ = this->display_->get_width();
-  this->x_raw_max_ = this->display_width_ - 1;
-  this->y_raw_max_ = this->display_height_ - 1;
+  this->display_height_ = this->display_->get_width();
+  this->display_width_ = this->display_->get_height();
+  this->x_raw_max_ = this->display_height_ - 1;
+  this->y_raw_max_ = this->display_width_ - 1;
 
   ESP_LOGI(TAG, "Display size: %dx%d", this->display_width_, this->display_height_);
   if (this->reset_pin_ != nullptr) {
