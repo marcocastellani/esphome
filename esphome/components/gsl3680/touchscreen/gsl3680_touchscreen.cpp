@@ -101,6 +101,7 @@ void GSL3680Touchscreen::setup() {
   this->y_raw_max_ = this->display_height_ - 1;
   if (this->swap_x_y_) {
     std::swap(this->x_raw_max_, this->y_raw_max_);
+    std::swap(this->display_width_, this->display_height_);
   }
 
   ESP_LOGI(TAG, "Display size: %dx%d", this->display_width_, this->display_height_);
