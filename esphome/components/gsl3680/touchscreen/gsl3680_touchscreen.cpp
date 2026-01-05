@@ -327,9 +327,7 @@ void GSL3680Touchscreen::update_touches() {
     uint16_t x = XY_Coordinate[i].x_position;
     uint16_t y = XY_Coordinate[i].y_position;
     x = this->display_width_ - x;
-    if (this->swap_x_y_) {
-      std::swap(x, y);
-    }
+
     this->add_raw_touch_position_(id, x, y);
     ESP_LOGVV(TAG, "positions read x=%d,y=%d,id=%d", x, y, id);
 
